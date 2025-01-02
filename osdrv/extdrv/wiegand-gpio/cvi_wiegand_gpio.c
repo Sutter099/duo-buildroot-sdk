@@ -542,7 +542,7 @@ static int cvi_wiegand_register_cdev(struct cvi_wiegand_device *ndev)
 {
 	int ret;
 
-	wiegand_class = class_create(THIS_MODULE, CVI_WIEGAND_CLASS_NAME);
+	wiegand_class = class_create(CVI_WIEGAND_CLASS_NAME);
 	if (IS_ERR(wiegand_class)) {
 		pr_err("create class failed\n");
 		return PTR_ERR(wiegand_class);
