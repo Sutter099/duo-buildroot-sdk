@@ -319,13 +319,8 @@ kernel-dts: memory-map
 kernel-dts: ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}
 	$(call print_target)
 	${Q}ln -snrf ${CVI_BOARD_MEMMAP_H_PATH} ${KERNEL_PATH}/scripts/dtc/include-prefixes/
-	${Q}find ${KERNEL_PATH}/arch/${ARCH}/boot/dts/${BRAND}/ -type l -delete
-	${Q}find ${DTS_DEFATUL_PATHS} -name *.dts* -exec ln -sf {} ${KERNEL_PATH}/arch/${ARCH}/boot/dts/${BRAND}/ \;
-	${Q}find ${BUILD_PATH}/boards/${CHIP_ARCH_L} \
-		\( -path "*linux/*.dts*" -o -path "*dts_${ARCH}/*.dts*" \) \
-		-exec ln -sf {} ${KERNEL_PATH}/arch/${ARCH}/boot/dts/${BRAND}/ \;
 	${Q}$(MAKE) -j${NPROC} -C ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER} dtbs
-	${Q}cp ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}/arch/${ARCH}/boot/dts/${BRAND}/*.dtb ${RAMDISK_PATH}/${RAMDISK_OUTPUT_FOLDER}
+	${Q}cp ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}/arch/${ARCH}/boot/dts/sophgo/*.dtb ${RAMDISK_PATH}/${RAMDISK_OUTPUT_FOLDER}
 
 kernel: $(OUTPUT_DIR)/rootfs
 kernel: kernel-build
@@ -333,7 +328,6 @@ kernel: kernel-build
 	${Q}echo LOCALVERSION=${LOCALVERSION}
 	$(call copy_Image_action)
 	$(call copy_ko_action, ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}/modules)
-	$(call copy_header_action, ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}/$(ARCH)/usr/include)
 ifeq ($(patsubst "%",%,$(CONFIG_ARCH)),arm64)
 	# Since we will support aarch32 user space even if the kernel is aarch64, install aarch32 headers also
 	$(call copy_header_action, ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}/arm/usr/include)
