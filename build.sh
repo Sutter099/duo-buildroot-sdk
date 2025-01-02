@@ -6,6 +6,8 @@ MILKV_BOARD=
 MILKV_BOARD_CONFIG=
 MILKV_IMAGE_CONFIG=
 MILKV_DEFAULT_BOARD=milkv-duo
+MILKV_KERNEL_VERSION="5.10"
+export MILKV_KERNEL_VERSION
 
 TOP_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 #echo "TOP_DIR: ${TOP_DIR}"
@@ -91,11 +93,41 @@ function choose_board()
   fi
 }
 
+function choose_kernel()
+{
+  echo "Select kernel version:"
+
+  echo "1. linux 5.10"
+  echo "2. linux 6.12"
+
+  local index
+  read -p "Which would you like: " index
+
+  if [[ -z $index ]]; then
+    print_info "Default kernel version: $MILKV_KERNEL_VERSION"
+  else
+    if [[ $index -eq 1 ]]; then
+      MILKV_KERNEL_VERSION="5.10"
+  elif [[ $index -eq 2 ]]; then
+      MILKV_KERNEL_VERSION="6.12"
+    else
+      print_err "Invalid input!"
+      exit 1
+    fi
+  fi
+}
+
 function prepare_env()
 {
   source ${MILKV_BOARD_CONFIG}
 
   source build/${MV_BUILD_ENV} > /dev/null 2>&1
+
+  if [ ${MILKV_BOARD} == "milkv-duos-sd" ]; then
+    print_info "choose kernel version here"
+    choose_kernel
+  fi
+
   defconfig ${MV_BOARD_LINK} > /dev/null 2>&1
 
   echo "OUTPUT_DIR: ${OUTPUT_DIR}"  # @build/milkvsetup.sh

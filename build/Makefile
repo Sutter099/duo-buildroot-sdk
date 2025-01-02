@@ -224,7 +224,7 @@ u-boot-clean:
 ################################################################################
 # configure kernel defconfig
 ifeq ($(CONFIG_BUILD_FOR_DEBUG),y)
-KERNEL_CONFIG_NAME := ${BRAND}_${PROJECT_FULLNAME}_defconfig
+KERNEL_CONFIG_NAME := ${BRAND}_${PROJECT_FULLNAME}_defconfig_$(MILKV_KERNEL_VERSION)
 else
 KERNEL_CONFIG_NAME := ${BRAND}_${PROJECT_FULLNAME}_rls_defconfig
 endif
@@ -273,6 +273,7 @@ endif
 # Make a copy to .config~
 ${KERNEL_OUTPUT_CONFIG_PATH}: ${KERNEL_DEFAULT_CONFIG_PATH} ${BUILD_PATH}/.config
 	$(call print_target)
+	echo $(KERNEL_DEFAULT_CONFIG_PATH)
 	${Q}echo "Kernel's defconfig is updated. Use it."
 	${Q}mkdir -p $(dir ${KERNEL_OUTPUT_CONFIG_PATH})
 	${Q}cmp -s ${KERNEL_DEFAULT_CONFIG_PATH} ${KERNEL_OUTPUT_CONFIG_PATH} || \
