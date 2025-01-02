@@ -91,12 +91,46 @@ function choose_board()
   fi
 }
 
+function choose_kernel()
+{
+  echo "Select kernel version:"
+
+  echo "1. linux 5.10"
+  echo "2. linux 6.12"
+
+  local index
+  read -p "Which would you like: " index
+
+  if [[ -z $index ]]; then
+    echo "Nothing selected."
+    exit 0
+  fi
+
+  if [[ $index -eq 1 ]]; then
+    # MILKV_BOARD="${MILKV_BOARD_ARRAY[$((index - 1))]}"
+    echo "index: $index, : linux 5.10"
+  elif [[ $index -eq 2 ]]; then
+    echo "index: $index, : linux 6.12"
+  else
+    print_err "Invalid input!"
+    exit 1
+  fi
+}
+
 function prepare_env()
 {
+  # TODO: kernel select
+
   source ${MILKV_BOARD_CONFIG}
 
   source build/${MV_BUILD_ENV} > /dev/null 2>&1
   defconfig ${MV_BOARD_LINK} > /dev/null 2>&1
+
+  if [ ${MILKV_BOARD} == "milkv-duos-sd" ]; then
+    print_info "choose kernel version here"
+    choose_kernel
+    # exit 0
+  fi
 
   echo "OUTPUT_DIR: ${OUTPUT_DIR}"  # @build/milkvsetup.sh
 
