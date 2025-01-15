@@ -23,6 +23,7 @@
 
 #include <linux/slab.h>
 #include <linux/of_gpio.h>
+#include <asm-generic/gpio.h>
 #include <linux/gpio.h>
 
 //#include <mach/map.h>
@@ -960,7 +961,8 @@ static void gsl_ts_late_resume(struct early_suspend *h)
 }
 #endif
 
-static int  gsl_ts_probe(struct i2c_client *client)
+static int  gsl_ts_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
 {
 	int rc;
 	/*reset and irq */
@@ -1061,7 +1063,7 @@ error_mutex_destroy:
 	return rc;
 }
 
-static void gsl_ts_remove(struct i2c_client *client)
+static int  gsl_ts_remove(struct i2c_client *client)
 {
 	struct gsl_ts *ts = i2c_get_clientdata(client);
 	pr_info("gsl_ts_remove...\n");
@@ -1077,6 +1079,8 @@ static void gsl_ts_remove(struct i2c_client *client)
 	mutex_destroy(&ts->sus_lock);
 	kfree(ts->touch_data);
 	kfree(ts);
+
+	return 0;
 }
 
 
