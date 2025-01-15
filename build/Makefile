@@ -224,7 +224,7 @@ u-boot-clean:
 ################################################################################
 # configure kernel defconfig
 ifeq ($(CONFIG_BUILD_FOR_DEBUG),y)
-KERNEL_CONFIG_NAME := ${BRAND}_${PROJECT_FULLNAME}_defconfig
+KERNEL_CONFIG_NAME := ${BRAND}_${PROJECT_FULLNAME}_defconfig_$(MILKV_KERNEL_VERSION)
 else
 KERNEL_CONFIG_NAME := ${BRAND}_${PROJECT_FULLNAME}_rls_defconfig
 endif
@@ -273,6 +273,7 @@ endif
 # Make a copy to .config~
 ${KERNEL_OUTPUT_CONFIG_PATH}: ${KERNEL_DEFAULT_CONFIG_PATH} ${BUILD_PATH}/.config
 	$(call print_target)
+	echo $(KERNEL_DEFAULT_CONFIG_PATH)
 	${Q}echo "Kernel's defconfig is updated. Use it."
 	${Q}mkdir -p $(dir ${KERNEL_OUTPUT_CONFIG_PATH})
 	${Q}cmp -s ${KERNEL_DEFAULT_CONFIG_PATH} ${KERNEL_OUTPUT_CONFIG_PATH} || \
@@ -316,13 +317,27 @@ DTS_DEFATUL_PATHS := \
 DTS_DEFATUL_PATHS := $(wildcard ${DTS_DEFATUL_PATHS})
 
 kernel-dts: memory-map
+ifeq ($(strip $(MILKV_KERNEL_VERSION)), 6.12)
 kernel-dts: ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}
 	$(call print_target)
 	${Q}ln -snrf ${CVI_BOARD_MEMMAP_H_PATH} ${KERNEL_PATH}/scripts/dtc/include-prefixes/
 	${Q}$(MAKE) -j${NPROC} -C ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER} dtbs
 	${Q}cp ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}/arch/${ARCH}/boot/dts/sophgo/*.dtb ${RAMDISK_PATH}/${RAMDISK_OUTPUT_FOLDER}
+else
+kernel-dts: ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}
+	$(call print_target)
+	${Q}ln -snrf ${CVI_BOARD_MEMMAP_H_PATH} ${KERNEL_PATH}/scripts/dtc/include-prefixes/
+	${Q}find ${KERNEL_PATH}/arch/${ARCH}/boot/dts/${BRAND}/ -type l -delete
+	${Q}find ${DTS_DEFATUL_PATHS} -name *.dts* -exec ln -sf {} ${KERNEL_PATH}/arch/${ARCH}/boot/dts/${BRAND}/ \;
+	${Q}find ${BUILD_PATH}/boards/${CHIP_ARCH_L} \
+		\( -path "*linux/*.dts*" -o -path "*dts_${ARCH}/*.dts*" \) \
+		-exec ln -sf {} ${KERNEL_PATH}/arch/${ARCH}/boot/dts/${BRAND}/ \;
+	${Q}$(MAKE) -j${NPROC} -C ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER} dtbs
+	${Q}cp ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}/arch/${ARCH}/boot/dts/${BRAND}/*.dtb ${RAMDISK_PATH}/${RAMDISK_OUTPUT_FOLDER}
+endif
 
 kernel: $(OUTPUT_DIR)/rootfs
+ifeq ($(strip $(MILKV_KERNEL_VERSION)), 6.12)
 kernel: kernel-build
 	$(call print_target)
 	${Q}echo LOCALVERSION=${LOCALVERSION}
@@ -333,6 +348,19 @@ ifeq ($(patsubst "%",%,$(CONFIG_ARCH)),arm64)
 	$(call copy_header_action, ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}/arm/usr/include)
 endif
 	${Q}ln -sf ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}  ${KERNEL_PATH}/build/kernel_output
+else
+kernel: kernel-build
+	$(call print_target)
+	${Q}echo LOCALVERSION=${LOCALVERSION}
+	$(call copy_Image_action)
+	$(call copy_ko_action, ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}/modules)
+	$(call copy_header_action, ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}/$(ARCH)/usr/include)
+ifeq ($(patsubst "%",%,$(CONFIG_ARCH)),arm64)
+	# Since we will support aarch32 user space even if the kernel is aarch64, install aarch32 headers also
+	$(call copy_header_action, ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}/arm/usr/include)
+endif
+	${Q}ln -sf ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}  ${KERNEL_PATH}/build/kernel_output
+endif
 
 ifeq ($(CONFIG_TOOLCHAIN_GLIBC_ARM64),y)
 INITRAMFS_BASE := glibc_arm64
