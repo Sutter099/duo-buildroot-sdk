@@ -497,7 +497,7 @@ fdt_list_tmpl = """
 fdt_tmpl = """
         fdt-{chip}_{board} {{
             description = "cvitek device tree - {chip}_{board}";
-            data = /incbin/("./cv1812h-milkv-duo-s.dtb");
+            data = /incbin/("./{chip}_{board}.dtb");
             type = "flat_dt";
             arch = "arm64";
             compression = "none";
